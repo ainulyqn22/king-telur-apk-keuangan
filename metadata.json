@@ -1,0 +1,6 @@
+{
+  "name": "HouseERP",
+  "description": "Sistem ERP terpadu untuk manajemen peternakan bebek petelur dan produksi telur asin, lengkap dengan pencatatan produksi kandang, pengerjaan curing (pemeraman), HPP Moving Average, jurnal keuangan, analisis tren penjualan, dan cetak PDF laporan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

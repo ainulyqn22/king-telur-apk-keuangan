@@ -1,0 +1,4 @@
+import{describe,expect,it,vi}from'vitest';
+import type{SalesRepository}from'../domain/SalesRepository';
+import{SalesService}from'./SalesService';
+describe('SalesService',()=>{it('rejects invalid quantities before the repository call',async()=>{const record=vi.fn();const repository:SalesRepository={getSnapshot:vi.fn(),record};const service=new SalesService(repository);await expect(service.record({date:'2026-07-17',customerId:'cust-1',eggType:'RAW',qty:0,pricePerUnit:2000,discount:0,shippingCost:0,notes:''})).rejects.toThrow();expect(record).not.toHaveBeenCalled();});it('rejects a discount larger than the invoice value',async()=>{const record=vi.fn();const repository:SalesRepository={getSnapshot:vi.fn(),record};const service=new SalesService(repository);await expect(service.record({date:'2026-07-17',customerId:'cust-1',eggType:'SALTED',qty:1,pricePerUnit:2000,discount:3000,shippingCost:0,notes:''})).rejects.toThrow();expect(record).not.toHaveBeenCalled();});});
