@@ -9,7 +9,7 @@ import {
   Calendar,
   AlertCircle
 } from 'lucide-react';
-import { Utils } from '../../../utils/managers';
+import { Utils } from '../../../shared/utils';
 import { useSalesController } from '../controllers/useSalesController';
 
 interface SalesViewProps {

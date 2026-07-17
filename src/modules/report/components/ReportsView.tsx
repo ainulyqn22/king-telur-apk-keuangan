@@ -11,7 +11,7 @@ import {
   Table,
   Filter
 } from 'lucide-react';
-import { Utils, ExportManager } from '../../../utils/managers';
+import { Utils, ExportManager } from '../../../shared/utils';
 import { useReportController } from '../controllers/useReportController';
 
 interface ReportsViewProps {

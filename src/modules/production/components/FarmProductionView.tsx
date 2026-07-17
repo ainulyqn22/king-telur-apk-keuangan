@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Plus,
-  Trash,
   ClipboardList,
   Flame,
   Activity,
@@ -10,8 +9,8 @@ import {
   Calendar,
   AlertTriangle
 } from 'lucide-react';
-import { ProductionManager, StorageManager, Utils } from '../../../utils/managers';
-import { FarmProduction, Settings } from '../../../types';
+import { Utils } from '../../../shared/utils';
+import { useFarmProductionController } from '../controllers/useFarmProductionController';
 
 interface FarmProductionViewProps {
   showToast: (msg: string, type: 'success' | 'error') => void;
@@ -20,8 +19,7 @@ interface FarmProductionViewProps {
 }
 
 export default function FarmProductionView({ showToast, onRefresh, refreshKey }: FarmProductionViewProps) {
-  const productions = ProductionManager.getProductions().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const settings = StorageManager.getData<Settings>('settings') || { shopName: '', logo: '', currency: 'Rp', defaultTransferPrice: 2000 };
+  const{productions,settings,loading,error,record}=useFarmProductionController(refreshKey);useEffect(()=>{if(error)showToast(error,'error');},[error,showToast]);
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [qty, setQty] = useState<number | ''>('');
@@ -47,7 +45,7 @@ export default function FarmProductionView({ showToast, onRefresh, refreshKey }:
   const totalPages = Math.ceil(filteredProds.length / itemsPerPage);
   const currentProds = filteredProds.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!date) {
@@ -72,7 +70,7 @@ export default function FarmProductionView({ showToast, onRefresh, refreshKey }:
     }
 
     try {
-      ProductionManager.addProduction({
+      await record({
         date,
         qty: Number(qty),
         transferPrice: Number(transferPrice),
@@ -91,22 +89,11 @@ export default function FarmProductionView({ showToast, onRefresh, refreshKey }:
       setQty('');
       setNotes('');
       onRefresh();
-    } catch (err: any) {
-      showToast(err.message || 'Gagal menyimpan data produksi', 'error');
+    } catch (err: unknown) {
+      showToast(err instanceof Error?err.message:'Gagal menyimpan data produksi', 'error');
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus catatan produksi ini? Tindakan ini akan mengurangi stok telur segar dan memperbarui Moving Average.')) {
-      try {
-        ProductionManager.deleteProduction(id);
-        showToast('Catatan produksi berhasil dihapus!', 'success');
-        onRefresh();
-      } catch (err: any) {
-        showToast(err.message || 'Gagal menghapus data', 'error');
-      }
-    }
-  };
 
   return (
     <div key={refreshKey} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -117,7 +104,7 @@ export default function FarmProductionView({ showToast, onRefresh, refreshKey }:
           <h2 className="text-lg font-bold text-gray-900">Input Produksi Kandang</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-medium text-gray-700">
+        <form onSubmit={(event)=>{void handleSubmit(event);}} className="space-y-4 text-xs font-medium text-gray-700">
           <div>
             <label className="block text-gray-500 mb-1">Tanggal Panen *</label>
             <input
@@ -307,7 +294,7 @@ export default function FarmProductionView({ showToast, onRefresh, refreshKey }:
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-gray-700 font-medium font-sans">
-              {currentProds.length === 0 ? (
+              {loading ? (<tr><td colSpan={7} className="text-center py-8 text-gray-400">Memuat data PostgreSQL...</td></tr>) : currentProds.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-8 text-gray-400">
                     Tidak ditemukan data produksi kandang.
@@ -341,13 +328,7 @@ export default function FarmProductionView({ showToast, onRefresh, refreshKey }:
                         {estimatedHpp > 0 ? Utils.formatCurrency(estimatedHpp) : '-'}
                       </td>
                       <td className="py-3 px-2 text-center">
-                        <button
-                          onClick={() => handleDelete(prod.id)}
-                          className="p-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition rounded-lg"
-                          title="Hapus catatan"
-                        >
-                          <Trash className="w-3.5 h-3.5" />
-                        </button>
+                        <span className="text-[10px] text-gray-400">Terkunci</span>
                       </td>
                     </tr>
                   );

@@ -17,7 +17,7 @@ import {
   Sparkles,
   Layers
 } from 'lucide-react';
-import { StorageManager, StockManager } from './utils/managers';
+import { useAppHeaderController } from './shared/controllers/useAppHeaderController';
 import { ViewErrorBoundary, ViewLoadingFallback } from './shared/components/ViewBoundary';
 
 const DashboardView = lazy(() => import('./modules/dashboard/components/DashboardView'));
@@ -53,9 +53,6 @@ function AppContent() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
-    // Run initialization of LocalStorage databases and default data seeding
-    StorageManager.initialize();
-    
     // Live clock update
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -73,9 +70,7 @@ function AppContent() {
   };
 
   // Quick info metrics
-  const settings = StorageManager.getData<any>('settings') || { shopName: 'HouseERP' };
-  const rawStock = StockManager.getRawStock();
-  const saltedStock = StockManager.getSaltedStock();
+  const {settings,rawStock,saltedStock}=useAppHeaderController(refreshKey);
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard Utama', icon: LayoutDashboard },

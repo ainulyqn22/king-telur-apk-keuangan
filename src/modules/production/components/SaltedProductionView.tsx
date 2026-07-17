@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Compass
 } from 'lucide-react';
-import { BatchManager, Utils } from '../../../utils/managers';
+import { Utils } from '../../../shared/utils';
 import { BatchStatus } from '../../../types';
 import { useProductionBatchController } from '../controllers/useProductionBatchController';
 
@@ -21,6 +21,7 @@ interface SaltedProductionViewProps {
 }
 
 export default function SaltedProductionView({ showToast, onRefresh, refreshKey }: SaltedProductionViewProps) {
+  const [referenceTime] = useState(() => Date.now());
   const { batches, rawStock, loading, saving, error, reload, create, transition } = useProductionBatchController();
   useEffect(()=>{if(refreshKey>0)void reload();},[refreshKey,reload]);
   useEffect(()=>{if(error)showToast(error,'error');},[error,showToast]);
@@ -309,9 +310,9 @@ export default function SaltedProductionView({ showToast, onRefresh, refreshKey 
                 </tr>
               ) : (
                 currentBatches.map((batch) => {
-                  const age = BatchManager.getBatchAge(batch);
+                  const age = Math.floor((referenceTime-new Date(`${batch.date}T00:00:00`).getTime())/86400000);
                   const isReadyForHarvest = batch.status === 'Pemeraman' && age >= 12;
-                  const badge = BatchManager.getBatchStatusBadge(batch.status);
+                  const badge = batch.status==='Pemeraman'?{bg:'bg-amber-100 text-amber-800',text:'Pemeraman (Asin)'}:batch.status==='Siap Panen'?{bg:'bg-blue-100 text-blue-800',text:'Siap Panen'}:batch.status==='Siap Dijual'?{bg:'bg-emerald-100 text-emerald-800',text:'Siap Dijual'}:{bg:'bg-gray-100 text-gray-800',text:'Selesai'};
 
                   return (
                     <tr key={batch.id} className="hover:bg-slate-50/50 transition">

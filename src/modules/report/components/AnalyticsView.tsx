@@ -22,8 +22,8 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { SalesManager, Utils } from '../../../utils/managers';
-import { Sale } from '../../../types';
+import { Utils } from '../../../shared/utils';
+import { useAnalyticsController } from '../controllers/useAnalyticsController';
 
 interface AnalyticsViewProps {
   refreshKey: number;
@@ -33,111 +33,9 @@ type ComparePeriod = 'today' | 'week' | 'month' | 'year';
 
 export default function AnalyticsView({ refreshKey }: AnalyticsViewProps) {
   const [activeCompare, setActiveCompare] = useState<ComparePeriod>('month');
-  const sales = SalesManager.getSales();
-
-  // Helper to extract transactions in exact dates
-  const getPeriodStats = (start: Date, end: Date) => {
-    // sets hours
-    const startTime = new Date(start).setHours(0, 0, 0, 0);
-    const endTime = new Date(end).setHours(23, 59, 59, 999);
-
-    const filtered = sales.filter(s => {
-      const date = new Date(s.date).getTime();
-      return date >= startTime && date <= endTime;
-    });
-
-    const qty = filtered.reduce((sum, s) => sum + s.qty, 0);
-    const revenue = filtered.reduce((sum, s) => sum + s.totalRevenue, 0);
-    const cogs = filtered.reduce((sum, s) => sum + s.cogs, 0);
-    const profit = filtered.reduce((sum, s) => sum + s.grossProfit, 0);
-
-    return { qty, revenue, cogs, profit, count: filtered.length };
-  };
-
-  const getComparisonData = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let currentStart = new Date();
-    let currentEnd = new Date();
-    let prevStart = new Date();
-    let prevEnd = new Date();
-    let periodLabel = '';
-
-    if (activeCompare === 'today') {
-      currentStart = new Date(today);
-      currentEnd = new Date(today);
-      
-      prevStart = new Date(today);
-      prevStart.setDate(today.getDate() - 1);
-      prevEnd = new Date(prevStart);
-      
-      periodLabel = 'Hari Ini vs Kemarin';
-    } else if (activeCompare === 'week') {
-      // Last 7 days
-      currentStart = new Date(today);
-      currentStart.setDate(today.getDate() - 6);
-      currentEnd = new Date(today);
-
-      // Prior 7 days
-      prevStart = new Date(today);
-      prevStart.setDate(today.getDate() - 13);
-      prevEnd = new Date(today);
-      prevEnd.setDate(today.getDate() - 7);
-
-      periodLabel = '7 Hari Ini vs 7 Hari Lalu';
-    } else if (activeCompare === 'month') {
-      // This Month
-      currentStart = new Date(today.getFullYear(), today.getMonth(), 1);
-      currentEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-      // Last Month
-      prevStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      prevEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-
-      periodLabel = 'Bulan Ini vs Bulan Lalu';
-    } else if (activeCompare === 'year') {
-      // This Year
-      currentStart = new Date(today.getFullYear(), 0, 1);
-      currentEnd = new Date(today.getFullYear(), 11, 31);
-
-      // Last Year
-      prevStart = new Date(today.getFullYear() - 1, 0, 1);
-      prevEnd = new Date(today.getFullYear() - 1, 11, 31);
-
-      periodLabel = 'Tahun Ini vs Tahun Lalu';
-    }
-
-    const currentStats = getPeriodStats(currentStart, currentEnd);
-    const prevStats = getPeriodStats(prevStart, prevEnd);
-
-    // Calculate percentage changes
-    const calculateChange = (curr: number, prev: number) => {
-      if (prev === 0) return curr > 0 ? 100 : 0;
-      return ((curr - prev) / prev) * 100;
-    };
-
-    const qtyChange = calculateChange(currentStats.qty, prevStats.qty);
-    const revChange = calculateChange(currentStats.revenue, prevStats.revenue);
-    const cogsChange = calculateChange(currentStats.cogs, prevStats.cogs);
-    const profitChange = calculateChange(currentStats.profit, prevStats.profit);
-
-    return {
-      current: currentStats,
-      previous: prevStats,
-      qtyChange,
-      revChange,
-      cogsChange,
-      profitChange,
-      periodLabel,
-      range: {
-        current: `${currentStart.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${currentEnd.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`,
-        previous: `${prevStart.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${prevEnd.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
-      }
-    };
-  };
-
-  const comp = getComparisonData();
+  const{comparison:comp,loading,error}=useAnalyticsController(activeCompare,refreshKey);
+  if(loading)return <div className="p-8 text-center text-sm text-gray-400">Memuat analitik dari PostgreSQL...</div>;
+  if(error)return <div className="p-8 text-center text-sm text-rose-600">{error}</div>;
 
   // Prepare side-by-side data for chart visualization
   const chartData = [

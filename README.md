@@ -2,13 +2,13 @@
 
 HouseERP is a browser-based ERP for a duck-egg business. It tracks farm production, raw and salted egg inventory, production batches, purchases, sales, operating costs, dashboards, and reports.
 
-> **Project status:** active hardening. Review [IMPROVEMENT_PLAN.md](./IMPROVEMENT_PLAN.md) before production deployment. Tenant isolation, relational persistence, and database-transaction work are still open production blockers.
+> **Project status:** Supabase persistence migration complete. Review [IMPROVEMENT_PLAN.md](./IMPROVEMENT_PLAN.md) before production deployment; tenant isolation and live database security testing remain required.
 
 ## Requirements
 
 - Node.js 22 or a compatible maintained Node.js release
 - npm
-- A Supabase project when cloud persistence/authentication is enabled
+- A Supabase project with authentication enabled
 
 ## Local development
 
@@ -29,7 +29,7 @@ VITE_SUPABASE_ANON_KEY="your-public-anon-key"
 
 Never place a Supabase service-role key in a `VITE_*` variable. Vite exposes these values to every browser user.
 
-If the Supabase variables are omitted, the current application falls back to browser storage. This is suitable for local evaluation only and is not an authoritative or tamper-resistant financial datastore.
+Both Supabase variables are required. The application has no browser-storage persistence fallback.
 
 ## Quality checks
 
@@ -67,12 +67,10 @@ Do not expose this application publicly until:
 
 The schema recognizes `Owner`, `Admin`, `Warehouse`, `Sales`, `Production`, `Finance`, and `User`. Database RLS—not hidden UI controls—must remain the authority for access decisions.
 
-## Backups and reset
+## Backups
 
-The settings screen can export and restore JSON backups. Validate backups and keep an external copy before resetting data. Restore currently writes several browser records sequentially and is tracked for transactional hardening in the improvement plan.
-
-System reset removes only HouseERP-owned browser keys; it does not clear storage belonging to unrelated applications on the same origin.
+Use managed PostgreSQL backups from Supabase. The settings screen exports the immutable database audit trail; unsafe client-side restore and system-reset operations have been removed.
 
 ## Architecture and limitations
 
-The UI is React 19, TypeScript, Vite, Tailwind CSS, Zod, Recharts, and Supabase. Purchasing, production batches, sales, and expenses use transactional relational repositories. Reports use a read-only Supabase repository and derive every financial, inventory, production, and journal view exclusively from PostgreSQL data. Remaining legacy workflows are tracked for migration in the P0 backlog.
+The UI is React 19, TypeScript, Vite, Tailwind CSS, Zod, Recharts, and Supabase. Every module reads from relational PostgreSQL repositories. Inventory-affecting commands execute through atomic PostgreSQL functions; reports and analytics use read-only Supabase repositories. No browser persistence or legacy manager layer remains.

@@ -7,7 +7,7 @@ import {
   Calendar,
   AlertCircle
 } from 'lucide-react';
-import { Utils } from '../../../utils/managers';
+import { Utils } from '../../../shared/utils';
 import { usePurchaseController } from '../controllers/usePurchaseController';
 
 interface PurchasesViewProps {

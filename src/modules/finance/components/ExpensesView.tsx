@@ -7,7 +7,7 @@ import {
   Calendar,
   AlertCircle
 } from 'lucide-react';
-import { Utils } from '../../../utils/managers';
+import { Utils } from '../../../shared/utils';
 import { useExpenseController } from '../controllers/useExpenseController';
 
 interface ExpensesViewProps {
