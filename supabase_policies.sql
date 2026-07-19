@@ -1,8 +1,0 @@
--- Compatibility entry point for manual Supabase setup.
---
--- The canonical, reviewed policy definition is:
---   database/migrations/010_row_level_security.sql
---
--- Apply all files in database/migrations in numeric order. Do not maintain a second
--- policy copy here: duplicated policy definitions previously drifted and left the
--- deployed migration with anonymous access that this documentation did not show.

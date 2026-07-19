@@ -1,0 +1,114 @@
+import { AlertCircle, Package, ShoppingBag, TrendingUp } from "lucide-react";
+import { Utils } from "@/shared/utils";
+import { useReportController } from "../../reports/controllers/useReportController";
+interface Props {
+  onNavigate: (page: string) => void;
+  showToast: (msg: string, type: "success" | "error") => void;
+  onRefresh: () => void;
+  refreshKey: number;
+}
+export default function DashboardView({
+  onNavigate,
+  showToast,
+  refreshKey,
+}: Props) {
+  const { report, loading, error } = useReportController(
+    { period: "today", supplierId: "all", customerId: "all" },
+    refreshKey,
+  );
+  if (loading || !report)
+    return (
+      <div className="p-8 text-center text-gray-400">
+        Memuat dashboard PostgreSQL...
+      </div>
+    );
+  if (error) showToast(error, "error");
+  const curing = report.batches.filter((batch) => batch.status === "Pemeraman");
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-2xl border">
+        <h1 className="text-2xl font-bold">Kinerja Operasional & Keuangan</h1>
+        <p className="text-sm text-gray-500">
+          Data langsung dari Supabase PostgreSQL.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card
+          title="Produksi Hari Ini"
+          value={`${report.productionReport.totalFarmEggs.toLocaleString("id-ID")} btr`}
+          icon={<TrendingUp />}
+        />
+        <Card
+          title="Stok Segar"
+          value={`${report.rawStock.qty.toLocaleString("id-ID")} btr`}
+          icon={<Package />}
+        />
+        <Card
+          title="Stok Asin"
+          value={`${report.saltedStock.qty.toLocaleString("id-ID")} btr`}
+          icon={<Package />}
+        />
+        <Card
+          title="Omzet Hari Ini"
+          value={Utils.formatCurrency(report.salesReport.totalRevenue)}
+          icon={<ShoppingBag />}
+        />
+      </div>
+      {curing.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <div className="flex gap-2">
+            <AlertCircle className="text-amber-700" />
+            <div>
+              <h2 className="font-bold text-amber-900">
+                Batch dalam pemeraman: {curing.length}
+              </h2>
+              <button
+                onClick={() => onNavigate("salted_production")}
+                className="text-xs text-amber-700 underline"
+              >
+                Buka monitoring batch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="grid md:grid-cols-3 gap-4">
+        <button
+          onClick={() => onNavigate("sales")}
+          className="p-5 bg-emerald-50 rounded-xl text-left font-bold"
+        >
+          Catat Penjualan
+        </button>
+        <button
+          onClick={() => onNavigate("farm_production")}
+          className="p-5 bg-amber-50 rounded-xl text-left font-bold"
+        >
+          Catat Produksi
+        </button>
+        <button
+          onClick={() => onNavigate("reports")}
+          className="p-5 bg-indigo-50 rounded-xl text-left font-bold"
+        >
+          Lihat Laporan
+        </button>
+      </div>
+    </div>
+  );
+}
+function Card({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white p-5 rounded-2xl border">
+      <div className="text-gray-400 w-5">{icon}</div>
+      <p className="text-xs text-gray-500 mt-3">{title}</p>
+      <p className="text-lg font-bold mt-1">{value}</p>
+    </div>
+  );
+}

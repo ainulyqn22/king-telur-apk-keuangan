@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-const migrationPath = new URL('../database/migrations/010_row_level_security.sql', import.meta.url);
+const migrationPath = new URL('../supabase/migrations/20260717000010_row_level_security.sql', import.meta.url);
 const sql = readFileSync(migrationPath, 'utf8');
 
 const tables = [
